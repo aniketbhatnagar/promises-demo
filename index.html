@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+<head>
+  <script src="https://www.promisejs.org/polyfills/promise-6.0.0.min.js"></script>
+  <script src="https://www.promisejs.org/polyfills/promise-done-6.0.0.min.js"></script>
+  <script>
+    
+    function log(msg) {
+      console.log(msg);
+      var paragraph = document.createElement("P");  
+      var text = document.createTextNode(msg);  
+      paragraph.appendChild(text);
+      document.getElementById("messages").appendChild(paragraph);
+    }
+    
+    var CarBuilder = {}
+    CarBuilder.makeBody = function(car) {
+      var body = {"id" : Math.floor(Math.random() * 100), "type": "body"}
+      log("Added body (" + JSON.stringify(body) + ") to car " + JSON.stringify(car));
+      car.body = body;
+      return Promise.resolve(car);
+    }
+    
+    CarBuilder.addAxles = function(car) {
+      var axles = ["axle front", "axle rear"]
+      log("Added axles (" + axles + ") to car " + JSON.stringify(car));
+      car.axles = axles;
+      return Promise.resolve(car);
+    }
+    
+    CarBuilder.addTyres = function (car) {
+      var tyres = ["tyre 1", "tyre 2", "tyre 3", "tyre 4"]
+      log("Added tyres (" + tyres + ") to car " + JSON.stringify(car));
+      car.tyres = tyres;
+      return Promise.resolve(car);
+    }
+    
+    CarBuilder.addStreeing = function (car) {
+      var streeing = {"id" : Math.floor(Math.random() * 100), "type": "streeing"}
+      log("Added streeing (" + JSON.stringify(streeing) + ") to car " + JSON.stringify(car));
+      car.streeing = streeing;
+      return Promise.resolve(car);
+    }
+    
+    CarBuilder.addWindows = function (car) {
+      var windows = ["window 1", "window 2", "window 3", "window 4"]
+      log("Added windows (" + windows + ") to body car " + JSON.stringify(car));
+      car.body.windows = windows;
+      return Promise.resolve(car);
+    }
+    
+    CarBuilder.addSideMirrors = function (car) {
+      var sideMirrors = ["mirror 1", "mirror 2"]
+      log("Added sideMirrors (" + sideMirrors + ") to body car " + JSON.stringify(car));
+      car.body.sideMirrors = sideMirrors;
+      return Promise.resolve(car);
+    }
+    
+    function liftFunction(nextFunc) {
+      var nextChainFunction = function(resultFromPrevStep) {
+        return nextFunc(resultFromPrevStep);
+      }
+      return nextChainFunction;
+    }
+    
+    function flattenCars(cars) {
+      // Since we mutate car object, we can return any element from the array. Bad idea but it works for demoing.
+      return cars[0]; 
+    }
+    
+    function createCar() {
+      var car = {"id" : Math.floor(Math.random() * 100), "type": "car"}
+      var carWithBodyAndAxles = CarBuilder.makeBody(car)
+                                          .then(liftFunction(CarBuilder.addAxles));
+      var carWithTyres        = carWithBodyAndAxles.then(liftFunction(CarBuilder.addTyres));
+      var carWithStreeing     = carWithBodyAndAxles.then(liftFunction(CarBuilder.addStreeing));
+      var finalCar            = Promise.all([carWithTyres, carWithStreeing])
+                                       .then(flattenCars)
+                                       .then(liftFunction(CarBuilder.addWindows))
+                                       .then(liftFunction(CarBuilder.addSideMirrors))
+      finalCar.done(function(car) {
+        log("Completed building the car. Final car is " + JSON.stringify(car));
+      })
+      return finalCar;
+    }
+    
+    window.addEventListener("load", createCar);
+    
+  </script>
+</head>
+<body>
+  <div id="messages">
+  </div>
+</body>
+</html>
