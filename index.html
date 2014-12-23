@@ -56,13 +56,6 @@
       return Promise.resolve(car);
     }
     
-    function liftFunction(nextFunc) {
-      var nextChainFunction = function(resultFromPrevStep) {
-        return nextFunc(resultFromPrevStep);
-      }
-      return nextChainFunction;
-    }
-    
     function combineCars(cars) {
       // Since we mutate car object, we can return any element from the array. Mutation is a bad idea but it works for demoing.
       return cars[0]; 
@@ -71,18 +64,18 @@
     function createCar() {
       var car = {"id" : Math.floor(Math.random() * 100), "type": "car"}; // Car initial object. This will be mutated by each process.
       var carWithBodyAndAxles = CarBuilder.makeBody(car)
-                                          .then(liftFunction(CarBuilder.addAxles)); // addAxles step is dependent on makeBody.
+                                          .then(CarBuilder.addAxles); // addAxles step is dependent on makeBody.
       /* 
        * The following functions (addTyres and addStreeing) are independent of each other but are dependent on addAxles
        * to complete. 
        */                                          
-      var carWithTyres        = carWithBodyAndAxles.then(liftFunction(CarBuilder.addTyres)); 
-      var carWithStreeing     = carWithBodyAndAxles.then(liftFunction(CarBuilder.addStreeing));
+      var carWithTyres        = carWithBodyAndAxles.then(CarBuilder.addTyres); 
+      var carWithStreeing     = carWithBodyAndAxles.then(CarBuilder.addStreeing);
       
       var finalCar            = Promise.all([carWithTyres, carWithStreeing]) // Await completion of addTyres & addStreeing processes.
                                        .then(combineCars) // combine results from addTyres & addStreeing.
-                                       .then(liftFunction(CarBuilder.addWindows)) // Similarly, addWindows is dependent of previous processes to complete.
-                                       .then(liftFunction(CarBuilder.addSideMirrors))
+                                       .then(CarBuilder.addWindows) // Similarly, addWindows is dependent of previous processes to complete.
+                                       .then(CarBuilder.addSideMirrors)
       finalCar.done(function(car) {
         log("Completed building the car. Final car is " + JSON.stringify(car));
       })
